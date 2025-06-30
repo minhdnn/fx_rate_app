@@ -1,41 +1,48 @@
-from playwright.sync_api import sync_playwright
+import requests
 from bs4 import BeautifulSoup
 
 def get_vietinbank_rates():
+    url = "https://www.vietinbank.vn/ca-nhan/ty-gia-khcn"
     target_currencies = ['USD', 'EUR', 'JPY', 'CNY']
     rates = []
 
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        page.goto("https://www.vietinbank.vn/ca-nhan/ty-gia-khcn", timeout=60000)
-        page.wait_for_selector("table")
-        html = page.content()
-        browser.close()
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
 
-    soup = BeautifulSoup(html, "html.parser")
-    table = soup.find("table")
-    rows = table.find_all("tr")[1:]
+    try:
+        res = requests.get(url, headers=headers, timeout=10)
+        res.raise_for_status()
+        soup = BeautifulSoup(res.text, "html.parser")
 
-    for row in rows:
-        cols = row.find_all("td")
-        if len(cols) < 5:
-            continue
+        table = soup.find("table")
+        if not table:
+            print("Không tìm thấy bảng tỷ giá trên trang Vietinbank.")
+            return []
 
-        currency = cols[0].text.strip()
-        if currency not in target_currencies:
-            continue
+        rows = table.find_all("tr")[1:]
+        for row in rows:
+            cols = row.find_all("td")
+            if len(cols) < 5:
+                continue
 
-        try:
-            buy = float(cols[2].text.replace(',', '').strip())
-            sell = float(cols[4].text.replace(',', '').strip())
-            rates.append({
-                'bank': 'Vietin',
-                'currency': currency,
-                'buy': buy,
-                'sell': sell
-            })
-        except:
-            continue
+            currency = cols[0].text.strip()
+            if currency not in target_currencies:
+                continue
+
+            try:
+                buy = float(cols[2].text.replace(',', '').strip())
+                sell = float(cols[4].text.replace(',', '').strip())
+                rates.append({
+                    'bank': 'Vietin',
+                    'currency': currency,
+                    'buy': buy,
+                    'sell': sell
+                })
+            except ValueError:
+                continue
+
+    except Exception as e:
+        print(f"Lỗi khi lấy tỷ giá Vietinbank: {e}")
 
     return rates
