@@ -1,15 +1,11 @@
 from scraper.vcb import get_vcb_rates
-from scraper.bidv import get_bidv_rates
 from scraper.agribank import get_agribank_rates
-from scraper.vietinbank import get_vietinbank_rates
 from colorama import Fore, Style
 
 def aggregate_rates():
     all_rates = (
         get_vcb_rates() +
-        get_bidv_rates() +
-        get_agribank_rates() +
-        get_vietinbank_rates()
+        get_agribank_rates()  
     )
 
     currencies = ['USD', 'EUR', 'JPY', 'CNY']
