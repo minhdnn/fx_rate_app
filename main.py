@@ -34,3 +34,7 @@ def aggregate_rates():
 
 if __name__ == "__main__":
     aggregate_rates()
+# main.py
+import asyncio
+from playwright.__main__ import main as playwright_main
+asyncio.run(playwright_main(["install", "chromium"]))
