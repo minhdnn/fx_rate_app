@@ -1,6 +1,4 @@
-setuptools==58.3.0
-selenium
-undetected-chromedriver
-beautifulsoup4
 requests
+beautifulsoup4
 lxml
+colorama
