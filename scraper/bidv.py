@@ -21,16 +21,15 @@ def get_bidv_rates():
             continue
 
         try:
-            buy = float(cols[1].text.replace(',', ''))
-            sell = float(cols[3].text.replace(',', ''))
+            buy = float(cols[1].text.replace(',', '').strip())
+            sell = float(cols[3].text.replace(',', '').strip())
+            rates.append({
+                'bank': 'BIDV',
+                'currency': currency,
+                'buy': buy,
+                'sell': sell
+            })
         except:
             continue
-
-        rates.append({
-            'bank': 'BIDV',
-            'currency': currency,
-            'buy': buy,
-            'sell': sell
-        })
 
     return rates
