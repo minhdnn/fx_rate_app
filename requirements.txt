@@ -1,6 +1,5 @@
-requests
-beautifulsoup4
-lxml
-colorama
 selenium
-playwright
+undetected-chromedriver
+beautifulsoup4
+requests
+lxml
