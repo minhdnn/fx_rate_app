@@ -1,33 +1,46 @@
-import requests
+import httpx
 from bs4 import BeautifulSoup
 
 def get_bidv_rates():
     url = "https://www.bidv.com.vn/vn/ty-gia/"
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
+    target_currencies = ['USD', 'EUR', 'JPY', 'CNY']
+    rates = []
 
-    response = requests.get(url, headers=headers)
-    response.raise_for_status()
+    try:
+        with httpx.Client(verify=False, timeout=30.0) as client:
+            response = client.get(url, headers={"User-Agent": "Mozilla/5.0"})
+            response.raise_for_status()
+            html = response.text
+    except Exception as e:
+        print(f"Lỗi khi truy cập BIDV: {e}")
+        return []
 
-    soup = BeautifulSoup(response.text, "html.parser")
-
+    soup = BeautifulSoup(html, "html.parser")
     table = soup.find("table")
-    rates = {}
+    if not table:
+        print("Không tìm thấy bảng tỉ giá BIDV")
+        return []
 
-    if table:
-        rows = table.find_all("tr")
-        for row in rows[1:]:  # Skip header row
-            cells = row.find_all("td")
-            if len(cells) >= 4:
-                currency = cells[0].get_text(strip=True)
-                buy = cells[1].get_text(strip=True).replace(",", "")
-                transfer = cells[2].get_text(strip=True).replace(",", "")
-                sell = cells[3].get_text(strip=True).replace(",", "")
-                rates[currency] = {
-                    "buy": float(buy),
-                    "transfer": float(transfer),
-                    "sell": float(sell)
-                }
+    rows = table.find_all("tr")[1:]
+    for row in rows:
+        cols = row.find_all("td")
+        if len(cols) < 5:
+            continue
+
+        currency = cols[0].text.strip()
+        if currency not in target_currencies:
+            continue
+
+        try:
+            buy = float(cols[1].text.replace(',', '').strip())
+            sell = float(cols[3].text.replace(',', '').strip())
+            rates.append({
+                'bank': 'BIDV',
+                'currency': currency,
+                'buy': buy,
+                'sell': sell
+            })
+        except ValueError:
+            continue
 
     return rates
