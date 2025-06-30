@@ -11,10 +11,15 @@ def get_vcb_rates():
     for item in root.findall('Exrate'):
         currency = item.get('CurrencyCode')
         if currency in target_currencies:
-            rates.append({
-                'bank': 'VCB',
-                'currency': currency,
-                'buy': float(item.get('Transfer')),
-                'sell': float(item.get('Sell'))
-            })
+            try:
+                buy = float(item.get('Transfer').replace(',', ''))
+                sell = float(item.get('Sell').replace(',', ''))
+                rates.append({
+                    'bank': 'VCB',
+                    'currency': currency,
+                    'buy': buy,
+                    'sell': sell
+                })
+            except:
+                continue
     return rates
