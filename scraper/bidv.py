@@ -1,25 +1,33 @@
-import undetected_chromedriver as uc
-from selenium.webdriver.common.by import By
-from selenium.webdriver.chrome.options import Options
+import requests
+from bs4 import BeautifulSoup
 
 def get_bidv_rates():
-    options = uc.ChromeOptions()
-    options.add_argument('--headless')
-    options.add_argument('--no-sandbox')
-    options.add_argument('--disable-dev-shm-usage')
+    url = "https://www.bidv.com.vn/vn/ty-gia/"
+    headers = {
+        "User-Agent": "Mozilla/5.0"
+    }
 
-    driver = uc.Chrome(options=options)
+    response = requests.get(url, headers=headers)
+    response.raise_for_status()
 
-    driver.get("https://www.bidv.com.vn/vn/ty-gia-ngoai-te")
+    soup = BeautifulSoup(response.text, "html.parser")
 
-    # Tùy vào trang bạn cần parse lại đúng element
-    page_source = driver.page_source
+    table = soup.find("table")
+    rates = {}
 
-    # BeautifulSoup parse
-    from bs4 import BeautifulSoup
-    soup = BeautifulSoup(page_source, 'html.parser')
+    if table:
+        rows = table.find_all("tr")
+        for row in rows[1:]:  # Skip header row
+            cells = row.find_all("td")
+            if len(cells) >= 4:
+                currency = cells[0].get_text(strip=True)
+                buy = cells[1].get_text(strip=True).replace(",", "")
+                transfer = cells[2].get_text(strip=True).replace(",", "")
+                sell = cells[3].get_text(strip=True).replace(",", "")
+                rates[currency] = {
+                    "buy": float(buy),
+                    "transfer": float(transfer),
+                    "sell": float(sell)
+                }
 
-    # ... xử lý để lấy tỷ giá
-
-    driver.quit()
-    return [...]  # Trả về danh sách tỷ giá
+    return rates
