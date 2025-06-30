@@ -1,51 +1,25 @@
-# scraper/bidv.py
-from playwright.sync_api import sync_playwright
-from bs4 import BeautifulSoup
+import undetected_chromedriver as uc
+from selenium.webdriver.common.by import By
+from selenium.webdriver.chrome.options import Options
 
 def get_bidv_rates():
-    """
-    Trả về list dict dạng:
-    {'bank': 'BIDV', 'currency': 'USD', 'buy': 23520.0, 'sell': 23640.0}
-    """
-    target_currencies = ['USD', 'EUR', 'JPY', 'CNY']
-    rates = []
+    options = uc.ChromeOptions()
+    options.add_argument('--headless')
+    options.add_argument('--no-sandbox')
+    options.add_argument('--disable-dev-shm-usage')
 
-    # 1. Mở trang bằng Playwright
-    with sync_playwright() as p:
-        browser = p.chromium.launch(headless=True)
-        page = browser.new_page()
-        page.goto("https://bidv.com.vn/vn/ty-gia-ngoai-te", timeout=60_000)
-        html = page.content()
-        browser.close()
+    driver = uc.Chrome(options=options)
 
-    # 2. Dùng BeautifulSoup để parse
-    soup = BeautifulSoup(html, "lxml")
-    table = soup.find("table")          # selector chung → đủ cho BIDV
-    if not table:
-        return rates                    # Trang đổi cấu trúc → trả list rỗng
+    driver.get("https://www.bidv.com.vn/vn/ty-gia-ngoai-te")
 
-    rows = table.find_all("tr")[1:]     # bỏ dòng tiêu đề
+    # Tùy vào trang bạn cần parse lại đúng element
+    page_source = driver.page_source
 
-    for row in rows:
-        cols = row.find_all("td")
-        if len(cols) < 4:
-            continue
+    # BeautifulSoup parse
+    from bs4 import BeautifulSoup
+    soup = BeautifulSoup(page_source, 'html.parser')
 
-        currency = cols[0].text.strip()
-        if currency not in target_currencies:
-            continue
+    # ... xử lý để lấy tỷ giá
 
-        try:
-            buy  = float(cols[1].text.strip().replace(',', ''))
-            sell = float(cols[3].text.strip().replace(',', ''))
-        except ValueError:
-            continue
-
-        rates.append({
-            'bank'    : 'BIDV',
-            'currency': currency,
-            'buy'     : buy,
-            'sell'    : sell,
-        })
-
-    return rates
+    driver.quit()
+    return [...]  # Trả về danh sách tỷ giá
