@@ -9,13 +9,13 @@ def get_vietinbank_rates():
         browser = p.chromium.launch(headless=True)
         page = browser.new_page()
         page.goto("https://www.vietinbank.vn/ca-nhan/ty-gia-khcn", timeout=60000)
-        page.wait_for_selector("table")  # Ensure table is loaded
+        page.wait_for_selector("table")
         html = page.content()
         browser.close()
 
     soup = BeautifulSoup(html, "html.parser")
     table = soup.find("table")
-    rows = table.find_all("tr")[1:]  # Skip header
+    rows = table.find_all("tr")[1:]
 
     for row in rows:
         cols = row.find_all("td")
@@ -29,14 +29,13 @@ def get_vietinbank_rates():
         try:
             buy = float(cols[2].text.replace(',', '').strip())
             sell = float(cols[4].text.replace(',', '').strip())
+            rates.append({
+                'bank': 'Vietin',
+                'currency': currency,
+                'buy': buy,
+                'sell': sell
+            })
         except:
             continue
-
-        rates.append({
-            'bank': 'Vietin',
-            'currency': currency,
-            'buy': buy,
-            'sell': sell
-        })
 
     return rates
