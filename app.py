@@ -247,4 +247,29 @@ def get_best_rates(currency):
             "message": str(e)
         }), 500
 
-@app.errorhandler()
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({
+        "error": "Endpoint not found",
+        "message": "Please check the API documentation at the root endpoint"
+    }), 404
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({
+        "error": "Internal server error",
+        "message": "Something went wrong on our end"
+    }), 500
+
+@app.errorhandler(429)
+def rate_limit_error(error):
+    return jsonify({
+        "error": "Rate limit exceeded",
+        "message": "Please try again later"
+    }), 429
+
+if __name__ == '__main__':
+    import os
+    port = int(os.environ.get('PORT', 5000))
+    debug_mode = os.environ.get('DEBUG', 'False').lower() == 'true'
+    app.run(host='0.0.0.0', port=port, debug=debug_mode)
