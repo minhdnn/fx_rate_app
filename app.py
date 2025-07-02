@@ -247,4 +247,4 @@ def get_best_rates(currency):
             "message": str(e)
         }), 500
 
-@app.errorhandler(
+@app.errorhandler()
