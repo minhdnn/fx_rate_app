@@ -38,8 +38,8 @@ python app.py
 ## 🎨 CLI Features
 
 Colorful terminal output with rate comparison:
-- 🟢 **Green stars** - Best buy rates
-- 🔴 **Red stars** - Best sell rates
+-  ⭐ Yellow star - Best buy/sell rates
+- 
 
 ```
 Currency: USD
