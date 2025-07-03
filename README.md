@@ -39,7 +39,7 @@ python app.py
 
 Colorful terminal output with rate comparison:
 -  ⭐ Yellow star - Best buy/sell rates
-- 
+  
 
 ```
 Currency: USD
