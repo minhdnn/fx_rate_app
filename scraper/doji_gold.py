@@ -33,14 +33,18 @@ def get_doji_gold_rates():
                     buy = float(buy_text) if buy_text and buy_text != '0' else 0
                     
                     if sell > 0 or buy > 0:  # Only include if we have valid prices
+                        # Translate common Vietnamese gold terms to English
+                        english_name = translate_gold_name(name)
+                        
                         rates.append({
                             'type': 'gold',
                             'category': 'domestic',
-                            'name': name,
+                            'name': english_name,
+                            'original_name': name,  # Keep original for reference
                             'key': key,
                             'buy': buy,
                             'sell': sell,
-                            'unit': 'VND/chỉ',
+                            'unit': 'VND/tael',  # Use 'tael' instead of 'chỉ'
                             'last_updated': last_updated
                         })
                 except (ValueError, TypeError):
@@ -64,14 +68,17 @@ def get_doji_gold_rates():
                     buy = float(buy_text) if buy_text and buy_text != '0' else 0
                     
                     if sell > 0 or buy > 0:
+                        english_name = translate_gold_name(name)
+                        
                         rates.append({
                             'type': 'gold',
                             'category': 'international',
-                            'name': name,
+                            'name': english_name,
+                            'original_name': name,
                             'key': key,
                             'buy': buy,
                             'sell': sell,
-                            'unit': 'VND' if 'VND' in name else 'USD',
+                            'unit': 'USD/oz' if 'USD' in name else 'VND/tael',
                             'last_updated': last_updated
                         })
                 except (ValueError, TypeError):
@@ -95,15 +102,18 @@ def get_doji_gold_rates():
                     buy = float(buy_text) if buy_text and buy_text != '0' else 0
                     
                     if sell > 0 or buy > 0:
+                        english_name = translate_gold_name(name)
+                        
                         # Determine unit based on price range
-                        unit = 'VND/chỉ' if sell > 1000 else 'VND/gram'
-                        if 'nghìn' in name.lower():
-                            unit = 'VND x1000/chỉ'
+                        unit = 'VND/tael' if sell > 1000 else 'VND/gram'
+                        if 'thousand' in english_name.lower():
+                            unit = 'VND x1000/tael'
                         
                         rates.append({
                             'type': 'jewelry',
                             'category': 'gold_jewelry',
-                            'name': name,
+                            'name': english_name,
+                            'original_name': name,
                             'key': key,
                             'buy': buy,
                             'sell': sell,
@@ -127,6 +137,71 @@ def get_doji_gold_rates():
         logger.error(f"Unexpected error in DOJI scraper: {e}")
         return []
 
+def translate_gold_name(vietnamese_name):
+    """Translate Vietnamese gold names to English"""
+    translations = {
+        # Common gold types
+        'Vàng SJC': 'SJC Gold',
+        'Vàng DOJI': 'DOJI Gold',
+        'Vàng PNJ': 'PNJ Gold',
+        'Vàng Bảo Tín': 'Bao Tin Gold',
+        'Vàng 24k': '24k Gold',
+        'Vàng 18k': '18k Gold',
+        'Vàng 14k': '14k Gold',
+        'Vàng 10k': '10k Gold',
+        'Vàng 9999': '9999 Gold',
+        'Vàng trang sức': 'Jewelry Gold',
+        'Vàng nhẫn': 'Ring Gold',
+        'Vàng dây chuyền': 'Necklace Gold',
+        'Vàng lắc': 'Bracelet Gold',
+        'Vàng bông tai': 'Earring Gold',
+        
+        # Units and descriptors
+        'chỉ': 'tael',
+        'gram': 'gram',
+        'nghìn': 'thousand',
+        'triệu': 'million',
+        'tỷ': 'billion',
+        'mua': 'buy',
+        'bán': 'sell',
+        'giá': 'price',
+        'hôm nay': 'today',
+        'cập nhật': 'updated',
+        
+        # International terms
+        'USD': 'USD',
+        'Ounce': 'Ounce',
+        'Troy Ounce': 'Troy Ounce',
+        'Spot': 'Spot',
+        'Future': 'Future',
+        'London': 'London',
+        'New York': 'New York',
+        'Comex': 'Comex',
+        'Loco London': 'Loco London',
+        
+        # Common patterns
+        'Vàng miếng': 'Gold Bar',
+        'Vàng lá': 'Gold Leaf',
+        'Vàng nữ trang': 'Women\'s Jewelry',
+        'Vàng nam': 'Men\'s Gold',
+        'Vàng trẻ em': 'Children\'s Gold',
+        'Kim cương': 'Diamond',
+        'Bạc': 'Silver',
+        'Bạch kim': 'Platinum'
+    }
+    
+    # Start with the original name
+    result = vietnamese_name
+    
+    # Apply translations
+    for vn_term, en_term in translations.items():
+        result = result.replace(vn_term, en_term)
+    
+    # Clean up extra spaces and formatting
+    result = ' '.join(result.split())
+    
+    return result
+
 def get_gold_charts():
     """Get gold chart URLs from DOJI API"""
     url = "http://giavang.doji.vn/api/giavang/?api_key=258fbd2a72ce8481089d88c678e9fe4f"
@@ -142,9 +217,11 @@ def get_gold_charts():
         igp_chart = root.find('IGPChart')
         if igp_chart is not None:
             for row in igp_chart.findall('Row'):
+                name = translate_gold_name(row.get('Name', ''))
                 charts.append({
                     'type': 'international_chart',
-                    'name': row.get('Name', ''),
+                    'name': name,
+                    'original_name': row.get('Name', ''),
                     'key': row.get('Key', ''),
                     'url': row.get('Url', '')
                 })
@@ -153,9 +230,11 @@ def get_gold_charts():
         gp_chart = root.find('GPChart')
         if gp_chart is not None:
             for row in gp_chart.findall('Row'):
+                name = translate_gold_name(row.get('Name', ''))
                 charts.append({
                     'type': 'domestic_chart',
-                    'name': row.get('Name', ''),
+                    'name': name,
+                    'original_name': row.get('Name', ''),
                     'key': row.get('Key', ''),
                     'url': row.get('Url', '')
                 })
